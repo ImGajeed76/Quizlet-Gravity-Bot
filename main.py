@@ -45,7 +45,7 @@ class GravityBot:
 
     def meteor_on_screen(self):
         pos = pyautogui.locateOnScreen(self.meteor_image_path, region=(
-            0, int(pyautogui.size()[1] / 3 * 2), pyautogui.size()[0], int(pyautogui.size()[1] / 2)))
+            0, int(pyautogui.size()[1] / 3), pyautogui.size()[0], int(pyautogui.size()[1] / 2)))
         return pos is not None, pos
 
     def get_start_pos(self):
@@ -79,8 +79,10 @@ class GravityBot:
 
         pyautogui.click(self.empty_pos[0], self.empty_pos[1])
 
-        words = str(pyperclip.paste()).split(";;")
-        return words
+        while pyperclip.paste() == self.console_code:
+            pass
+
+        return str(pyperclip.paste()).split(";;")
 
     def run(self):
         first_iteration = True

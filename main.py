@@ -21,20 +21,14 @@ class GravityBot:
 
     timeout = 150
 
-    console_code = r"setTimeout(() => {" \
-                   r"let word = '';" \
-                   r"let element = document.getElementsByClassName('GravityTerm-text');" \
-                   r"let child = element[0].firstChild;" \
-                   r"word = child.innerHTML;" \
-                   r"navigator.clipboard.writeText(word);" \
-                   r"}, $timeout$);"
+    console_code = r"setTimeout(() => {let words = '';let elements = document.getElementsByClassName('GravityTerm-text');for (const element of elements) {let child = element.firstChild;words += child.innerHTML + ';;';}navigator.clipboard.writeText(words);}, $timeout$);"
 
     empty_pos = ()
     start_pos = ()
     console_pos = ()
     input_pos = ()
 
-    last_word = ""
+    last_words = ""
 
     def __init__(self, words: dict):
         for k, v in words.items():
@@ -50,7 +44,8 @@ class GravityBot:
         return open_cv_image
 
     def meteor_on_screen(self):
-        pos = pyautogui.locateOnScreen(self.meteor_image_path)
+        pos = pyautogui.locateOnScreen(self.meteor_image_path, region=(
+            0, int(pyautogui.size()[1] / 3 * 2), pyautogui.size()[0], int(pyautogui.size()[1] / 2)))
         return pos is not None, pos
 
     def get_start_pos(self):
@@ -75,7 +70,7 @@ class GravityBot:
         else:
             print("Waring: Input pos not found")
 
-    def get_word(self):
+    def get_words(self):
         pyautogui.click(self.console_pos[0], self.console_pos[1])
 
         pyperclip.copy(self.console_code)
@@ -84,94 +79,74 @@ class GravityBot:
 
         pyautogui.click(self.empty_pos[0], self.empty_pos[1])
 
-        word = str(pyperclip.paste())
-        return word
+        words = str(pyperclip.paste()).split(";;")
+        return words
 
     def run(self):
+        first_iteration = True
+
         # setup
-        self.get_start_pos()
+        # self.get_start_pos()
+        self.get_console_pos()
 
         # start
-        pyautogui.click(self.start_pos[0], self.start_pos[1])
+        print("Ready. You can start now.")
+        # pyautogui.click(self.start_pos[0], self.start_pos[1])
 
         # mainloop
         while True:
             self.get_console_pos()
             m_on_screen, pos = self.meteor_on_screen()
             if m_on_screen:
-                self.last_word = self.get_word()
+                if first_iteration:
+                    first_iteration = False
+                    self.empty_pos = pyautogui.position()
+                self.last_words = self.get_words()
             else:
-                self.last_word = ""
+                self.last_words = []
 
-            if self.last_word != "":
+            if self.last_words != "":
                 self.run_input()
 
     def run_input(self):
-        other = self.words[self.last_word]
-        pyperclip.copy(other)
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('enter')
+        for word in self.last_words:
+            if word != '':
+                other = self.words[word]
+                pyperclip.copy(other)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.press('enter')
+
+        self.last_words = []
 
 
 if __name__ == '__main__':
     words = {
-        "la tête": "der Kopf",
-        "le cou": "der Hals",
-        "le bras": "der Arm",
-        "l'épaule (f)": "die Schulter",
-        "le coude": "der Ellbogen",
-        "la main": "die Hand",
-        "le doigt": "der Finger",
-        "le dos": "der Rücken",
-        "la jambe": "das Bein",
-        "le genou": "das Knie",
-        "le pied": "der Fuss",
-        "croiser": "kreuzen",
-        "écarter": "spreizen, ausbreiten",
-        "plier": "beugen, falten",
-        "tendre": "strecken",
-        "baisser": "senken",
-        "lâcher": "loslassen",
-        "arrêter": "aufhören",
-        "recommencer": "wieder beginnen",
-        "avancer": "nach vorne strecken",
-        "reculer": "zurückziehen, zurückgehen",
-        "danser": "tanzen",
-        "se lever": "aufstehen",
-        "Lève-toi.": "Steh auf.",
-        "Levez-vous.": "Steht auf.",
-        "s'asseoir": "sich setzen",
-        "Assieds-toi.": "Setz dich.",
-        "Asseyez-vous.": "Setzt euch.",
-        "tenir": "halten",
-        "Tiens...": "Halte...",
-        "Tenez...": "Haltet...",
-        "la plage": "der Strand",
-        "la pluie": "der Regen",
-        "le vent": "der Wind",
-        "la neige": "der Schnee",
-        "Tu t'en souviens?": "Erinnerst du dich daran?",
-        "J'y pense souvent.": "Ich denke oft daran.",
-        "J'en suis fier/fière.": "Ich bin stolz darauf.",
-        "On en parle.": "Man spricht darüber.",
-        "J'en ai besoin.": "Ich brauche es.",
-        "Elle en profite.": "Sie profitiert davon.",
-        "Je m'en fous.": "Das ist mir egal.",
-        "Je n'en sais rien.": "Ich weiss nichts davon.",
-        "Je n'y peux rien.": "Ich kann nichts dafür.",
-        "On y va?": "Auf geht's!",
-        "J'y vais.": "Ich mache mich auf den Weg.",
-        "Vas-y!": "Los! / Mach schon!",
-        "Allons-y!": "Auf geht's!",
-        "On y est.": "Es ist so weit.",
-        "Nous y sommes.": "Da wären wir.",
-        "Ca y est.": "Es ist so weit.",
-        "Va-t'en!": "Geh weg!",
-        "On s'en va.": "Wir gehen jetzt.",
-        "Le/La ... qui me plaît est...": "..., der mir gefällt, ist...",
-        "Un/Une... qui me fascine est...": "..., der/die mich fasziniert, ist...",
-        "Le/La... que je préfère est...": "..., den/die ich bevorzuge, ist...",
-        "Le/La... que je trouve bien est...": "..., das ich gut finde, ist...",
+        "bouger": "(sich) bewegen",
+        "courir": "laufen, rennen",
+        "lancer": "werfen",
+        "sauter": "springen, hüpfen",
+        "nager": "schwimmen",
+        "glisser": "gleiten",
+        "pratiquer": "ausüben",
+        "transpirer": "schwitzen",
+        "la force": "die Kraft",
+        "l'équilibre (m)": "das Gleichgewicht",
+        "la sensation": "das Gefühl",
+        "souple": "beweglich",
+        "fort/forte": "stark",
+        "Le but, c'est de...": "Das Ziel ist, zu...",
+        "gagner": "gewinnen",
+        "prendre du plaisir": "Spass haben",
+        "se détendre": "sich entspannen",
+        "devenir plus fort": "stärker werden",
+        "rester en forme": "in Form bleiben / fit bleiben",
+        "être équipé/-e de...": "ausgerüstet sein mit...",
+        "la difficulté": "die Schwierigkeit",
+        "difficile": "schwierig",
+        "facile": "einfach, leicht",
+        "seul/seule": "allein",
+        "à deux, à trois...": "zu zweit, zu dritt...",
+        "en groupe": "in Gruppen",
     }
 
     bot = GravityBot(words)

@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import numpy as np
 import pyautogui
@@ -121,35 +123,104 @@ class GravityBot:
         self.last_words = []
 
 
+class GravityBot2:
+    words = {}
+
+    console_image_path = r"images/console.png"
+
+    timeout = 2000
+    console_code = ""
+    console_pos = ()
+    empty_pos = ()
+
+    new_words = []
+    clipboard = ""
+
+    def __init__(self, words: dict, code_file: str):
+        for k, v in words.items():
+            self.words.update({k: v, v: k})
+
+        file = open(code_file, 'r')
+        self.console_code = file.read()
+        self.console_code = self.console_code.replace("$timeout$", str(self.timeout))
+        file.close()
+
+    def get_console_pos(self):
+        pos = pyautogui.locateOnScreen(self.console_image_path)
+        if pos is not None:
+            self.console_pos = (pos.left + pos.width, pos.top + (pos.height / 2))
+        else:
+            print("Waring: Console pos not found")
+
+    def run(self):
+        print("Put ur mouse on a empty spot")
+        print("u got 5 seconds")
+        time.sleep(5)
+        self.empty_pos = pyautogui.position()
+        print("go")
+
+        # init
+        self.get_console_pos()
+        pyautogui.click(self.console_pos[0], self.console_pos[1])
+        pyperclip.copy(self.console_code)
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
+        pyautogui.click(self.empty_pos[0], self.empty_pos[1])
+
+        while pyperclip.paste() == self.console_code:
+            pass
+
+        # run
+        running = True
+        while running:
+            if str(pyperclip.paste()) != self.clipboard:
+                self.clipboard = str(pyperclip.paste())
+                n_words = self.clipboard.split(";;")
+                self.new_words.extend(n_words)
+
+            self.solve_one()
+
+    def solve_one(self):
+        if len(self.new_words) > 0:
+            word = self.new_words[0]
+            if word != '':
+                print(self.new_words)
+                print(word)
+                other = self.words[word]
+
+                pyautogui.write(other)
+                pyautogui.press('enter')
+
+            self.new_words = list(filter(word.__ne__, self.new_words))
+
+
 if __name__ == '__main__':
     words = {
-        "bouger": "(sich) bewegen",
-        "courir": "laufen, rennen",
-        "lancer": "werfen",
-        "sauter": "springen, hüpfen",
-        "nager": "schwimmen",
-        "glisser": "gleiten",
-        "pratiquer": "ausüben",
-        "transpirer": "schwitzen",
-        "la force": "die Kraft",
-        "l'équilibre (m)": "das Gleichgewicht",
-        "la sensation": "das Gefühl",
-        "souple": "beweglich",
-        "fort/forte": "stark",
-        "Le but, c'est de...": "Das Ziel ist, zu...",
-        "gagner": "gewinnen",
-        "prendre du plaisir": "Spass haben",
-        "se détendre": "sich entspannen",
-        "devenir plus fort": "stärker werden",
-        "rester en forme": "in Form bleiben / fit bleiben",
-        "être équipé/-e de...": "ausgerüstet sein mit...",
-        "la difficulté": "die Schwierigkeit",
-        "difficile": "schwierig",
-        "facile": "einfach, leicht",
-        "seul/seule": "allein",
-        "à deux, à trois...": "zu zweit, zu dritt...",
-        "en groupe": "in Gruppen",
+        "Auseinandersetzung, Streit": "argument",
+        "Kreuzfahrt, Schiffsreise": "cruise",
+        "stören": "disturb",
+        "Taucher/Taucherin": "diver",
+        "sich (zer)streiten": "fall out",
+        "Erwärmung der Erdatmosphäre": "global warming",
+        "jedoch": "however",
+        "glücklicherweise": "luckily",
+        "Verschmutzung": "pollution",
+        "leider": "sadly",
+        "leiden (unter)": "suffer (from)",
+        "deshalb, darum": "that's why",
+        "bedrohen, drohen": "threaten",
+        "unglaublich": "unbelievable",
+        "Menge": "amount",
+        "meiden, vermeiden": "avoid",
+        "konsumieren, zu sich nehmen": "consume",
+        "zurzeit, momentan": "currently",
+        "schaden, Schaden zufügen": "harm",
+        "ignorieren, nicht beachten": "ignore",
+        "Überfischen": "overfishing",
+        "Politiker/Politikerin": "politician",
+        "Meeresfrüchte": "seafood",
+
     }
 
-    bot = GravityBot(words)
+    bot = GravityBot2(words, "code_2.js")
     bot.run()
